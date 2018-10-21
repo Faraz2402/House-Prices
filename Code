@@ -1,0 +1,40 @@
+#Reading Libraries
+library(caret)
+library(knitr)
+library(randomForest)
+library(MASS)
+library(dplyr)
+library(mice)
+
+#Dividing Data
+train = read.csv("E:\\Faraz\\Data Science\\Machine Learning\\Kaggle\\House Prices\\train.csv",stringsAsFactors = F)
+test = read.csv("E:\\Faraz\\Data Science\\Machine Learning\\Kaggle\\House Prices\\test.csv",stringsAsFactors = F)
+
+#Cleaning Data
+combined <- rbind(within(train, rm('Id','SalePrice')), within(test, rm('Id')))
+na_cols <- which(colSums(is.na(combined)) > 0)
+sort(colSums(sapply(combined[na_cols], is.na)), decreasing = TRUE)
+colnames(train)
+which(!is.na(combined$PoolQC))
+combined$PoolQC[is.na(combined$PoolQC)] = 'None'
+
+#Fitting a Model
+library(rpart)
+library(rpart.plot)
+fit = rpart(SalePrice ~ LotArea + YearBuilt + Condition1 + FullBath + BedroomAbvGr + TotRmsAbvGrd, data=train)
+rpart.plot(fit,type = 1)
+
+#Submission 1
+submission = data.frame(Id = test$Id,SalePrice = test$predict_saleprice)
+write.csv(submission,file = "E:/Faraz/Data Science/Machine Learning/Kaggle/House Prices/submission.csv",row.names = F)
+
+#Fit Another Model
+fit1 = lm(SalePrice ~ LotArea + YearBuilt + Condition1 + FullBath + BedroomAbvGr + TotRmsAbvGrd + PavedDrive + OpenPorchSF + EnclosedPorch + KitchenAbvGr , data=train)
+summary(fit1)
+SalePrice <- predict(fit1, test, type="response")
+model_output <- cbind(test, SalePrice)
+model_output
+
+#Submission 2
+submission2 = data.frame(Id = test$Id,SalePrice = model_output$SalePrice)
+write.csv(submission2,file = "E:/Faraz/Data Science/Machine Learning/Kaggle/House Prices/submission2.csv",row.names = F)
